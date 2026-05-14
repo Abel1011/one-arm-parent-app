@@ -1,0 +1,124 @@
+{
+  "generatedAt": "2026-05-14T00:40:54.627Z",
+  "assets": [
+    {
+      "id": "routine-start-short",
+      "kind": "speech",
+      "title": "Routine start",
+      "status": "generated",
+      "path": "/audio/generated/routine/routine-start-short.mp3"
+    },
+    {
+      "id": "routine-dim-lights",
+      "kind": "speech",
+      "title": "Dim lights",
+      "status": "generated",
+      "path": "/audio/generated/routine/routine-dim-lights.mp3"
+    },
+    {
+      "id": "routine-gentle-transfer",
+      "kind": "speech",
+      "title": "Gentle transfer",
+      "status": "generated",
+      "path": "/audio/generated/routine/routine-gentle-transfer.mp3"
+    },
+    {
+      "id": "routine-baby-woke-up",
+      "kind": "speech",
+      "title": "Baby woke up",
+      "status": "generated",
+      "path": "/audio/generated/routine/routine-baby-woke-up.mp3"
+    },
+    {
+      "id": "confirm-feeding",
+      "kind": "speech",
+      "title": "Feeding confirmed",
+      "status": "generated",
+      "path": "/audio/generated/confirmations/confirm-feeding.mp3"
+    },
+    {
+      "id": "confirm-diaper",
+      "kind": "speech",
+      "title": "Diaper confirmed",
+      "status": "generated",
+      "path": "/audio/generated/confirmations/confirm-diaper.mp3"
+    },
+    {
+      "id": "fallback-not-caught",
+      "kind": "speech",
+      "title": "Command not caught",
+      "status": "generated",
+      "path": "/audio/generated/fallbacks/fallback-not-caught.mp3"
+    },
+    {
+      "id": "fallback-listening-off",
+      "kind": "speech",
+      "title": "Listening off",
+      "status": "generated",
+      "path": "/audio/generated/fallbacks/fallback-listening-off.mp3"
+    },
+    {
+      "id": "emotion-you-are-doing-well",
+      "kind": "speech",
+      "title": "You are doing well",
+      "status": "generated",
+      "path": "/audio/generated/emotional/emotion-you-are-doing-well.mp3"
+    },
+    {
+      "id": "white-noise",
+      "kind": "sound",
+      "title": "White noise",
+      "status": "skipped",
+      "path": "/audio/generated/sounds/white-noise.mp3"
+    },
+    {
+      "id": "brown-noise",
+      "kind": "sound",
+      "title": "Brown noise",
+      "status": "skipped",
+      "path": "/audio/generated/sounds/brown-noise.mp3"
+    },
+    {
+      "id": "rain",
+      "kind": "sound",
+      "title": "Rain",
+      "status": "skipped",
+      "path": "/audio/generated/sounds/rain.mp3"
+    },
+    {
+      "id": "heartbeat",
+      "kind": "sound",
+      "title": "Heartbeat",
+      "status": "skipped",
+      "path": "/audio/generated/sounds/heartbeat.mp3"
+    },
+    {
+      "id": "shushing",
+      "kind": "sound",
+      "title": "Shushing",
+      "status": "skipped",
+      "path": "/audio/generated/sounds/shushing.mp3"
+    },
+    {
+      "id": "humming",
+      "kind": "sound",
+      "title": "Humming",
+      "status": "skipped",
+      "path": "/audio/generated/sounds/humming.mp3"
+    },
+    {
+      "id": "lullaby-hum-short",
+      "kind": "music",
+      "title": "Short humming lullaby",
+      "status": "skipped",
+      "path": "/audio/generated/music/lullaby-hum-short.mp3"
+    },
+    {
+      "id": "breathing-calm-bed",
+      "kind": "music",
+      "title": "Breathing calm bed",
+      "status": "skipped",
+      "path": "/audio/generated/music/breathing-calm-bed.mp3"
+    }
+  ]
+}

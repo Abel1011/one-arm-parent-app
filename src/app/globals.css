@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+:root {
+  /* Warm care-console palette: cream canvas, terracotta hero, sage calm, honey accent, plum ink */
+  --cream: #fff6ec;
+  --cream-deep: #fbe8d3;
+  --peach: #ffd9bd;
+  --terracotta: #e07856;
+  --terracotta-deep: #c4593a;
+  --sage: #7ca982;
+  --sage-deep: #4f7a5a;
+  --honey: #f5c26b;
+  --plum: #3b2a2f;
+  --plum-soft: #6b4f57;
+  --blush: #fbe1e2;
+
+  --background: var(--cream);
+  --foreground: var(--plum);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-cream: var(--cream);
+  --color-cream-deep: var(--cream-deep);
+  --color-peach: var(--peach);
+  --color-terracotta: var(--terracotta);
+  --color-terracotta-deep: var(--terracotta-deep);
+  --color-sage: var(--sage);
+  --color-sage-deep: var(--sage-deep);
+  --color-honey: var(--honey);
+  --color-plum: var(--plum);
+  --color-plum-soft: var(--plum-soft);
+  --color-blush: var(--blush);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body);
+}
+
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+body {
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  background-image:
+    radial-gradient(60rem 32rem at 12% -8%, rgba(245, 194, 107, 0.35), transparent 60%),
+    radial-gradient(48rem 28rem at 110% 12%, rgba(224, 120, 86, 0.28), transparent 60%),
+    radial-gradient(50rem 30rem at 50% 110%, rgba(124, 169, 130, 0.28), transparent 60%);
+  background-attachment: fixed;
+}
+
+.font-display {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 60, "WONK" 0, "opsz" 96;
+  letter-spacing: -0.02em;
+}
+
+.font-display-wonk {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 96;
+  letter-spacing: -0.025em;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+@keyframes blobDrift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(2%, -3%, 0) scale(1.04); }
+}
+
+.blob-drift {
+  animation: blobDrift 18s ease-in-out infinite;
+}
+
+/* Voice orb pulsing rings when listening */
+@keyframes orbRing {
+  0% { transform: scale(0.85); opacity: 0.55; }
+  80% { opacity: 0; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.orb-ring {
+  animation: orbRing 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes orbBreathe {
+  0%, 100% { transform: scale(1); box-shadow: 0 30px 60px -25px rgba(196, 89, 58, 0.55), 0 0 0 0 rgba(255, 217, 189, 0.6); }
+  50% { transform: scale(1.03); box-shadow: 0 36px 70px -25px rgba(196, 89, 58, 0.65), 0 0 0 14px rgba(255, 217, 189, 0.0); }
+}
+
+.orb-breathe {
+  animation: orbBreathe 3.4s ease-in-out infinite;
+}
+
+/* Equalizer bars when audio plays */
+@keyframes eqBar {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
+.eq-bar {
+  transform-origin: bottom center;
+  animation: eqBar 1s ease-in-out infinite;
+}
+
+/* Floating now-playing chip entrance */
+@keyframes floatIn {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.float-in {
+  animation: floatIn 0.35s ease-out both;
+}
