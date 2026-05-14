@@ -214,6 +214,7 @@ export function makeSoftReminder(request: ReminderRequest, source: ReminderSourc
     createdAt,
     source,
     tone: request.tone,
+    recurrence: request.recurrence,
   };
 }
 
