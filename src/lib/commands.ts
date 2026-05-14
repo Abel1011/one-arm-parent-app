@@ -70,6 +70,12 @@ type ParsedCommand =
   | { type: "handoff"; action: "summary" | "next" | "note-mom" | "note-dad" }
   | { type: "unknown" };
 
+type PhraseEntry = {
+  phrase: string;
+  command: ParsedCommand;
+  tokens: string[];
+};
+
 const commandPhrase = (phrase: string, command: ParsedCommand) => ({ phrase, command });
 
 const phraseMap: Array<{ phrase: string; command: ParsedCommand }> = [
@@ -119,19 +125,25 @@ const phraseMap: Array<{ phrase: string; command: ParsedCommand }> = [
   ...audioTracks.map((track) => commandPhrase(track.command, { type: "audio", action: "play", track: track.id })),
 ].sort((left, right) => right.phrase.length - left.phrase.length);
 
-export function resolveCommand(transcript: string): ParsedCommand {
-  const normalized = transcript
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+const phraseEntries: PhraseEntry[] = phraseMap.map((entry) => ({
+  ...entry,
+  tokens: entry.phrase.split(" "),
+}));
+
+export function resolveCommand(transcript: string, mode: AppMode = "home"): ParsedCommand {
+  const normalized = normalizeCommandTranscript(transcript);
 
   if (normalized.includes("baby is crying") || normalized.includes("the baby is crying") || normalized.includes("baby is criing") || normalized.includes("baby crying")) {
     return { type: "sleep", action: "crying" };
   }
 
   const match = phraseMap.find((item) => normalized.includes(item.phrase));
-  return match?.command ?? { type: "unknown" };
+  if (match) {
+    return match.command;
+  }
+
+  const fuzzyMatch = findFuzzyCommandMatch(normalized, mode);
+  return fuzzyMatch?.command ?? { type: "unknown" };
 }
 
 export function makeLogEntry(type: LogEntry["type"], label: string, detail: string): LogEntry {
@@ -153,4 +165,219 @@ export function buildHandoffSummary(logs: LogEntry[]) {
 
   const latest = logs.slice(0, 3).map((entry) => `${entry.label.toLowerCase()} at ${entry.time}`);
   return `Today so far: ${latest.join(", ")}.`;
+}
+
+function normalizeCommandTranscript(transcript: string) {
+  const normalized = transcript
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return applyContextualCommandCorrections(normalized);
+}
+
+function applyContextualCommandCorrections(transcript: string) {
+  return transcript
+    .replace(/\b(?:love|luv|look|lock|long|lug) feeding\b/g, "log feeding")
+    .replace(/\b(?:love|luv|look|lock|long|lug) breastfeeding\b/g, "log breastfeeding")
+    .replace(/\b(?:love|luv|look|lock|long|lug) bottle\b/g, "log bottle")
+    .replace(/\b(?:love|luv|look|lock|long|lug) diaper\b/g, "log diaper")
+    .replace(/\b(?:love|luv|look|lock|long|lug) nap\b/g, "log nap")
+    .replace(/\b(?:love|luv|look|lock|long|lug) wet diaper\b/g, "wet diaper")
+    .replace(/\b(?:love|luv|look|lock|long|lug) dirty diaper\b/g, "dirty diaper");
+}
+
+function findFuzzyCommandMatch(transcript: string, mode: AppMode) {
+  const transcriptTokens = transcript.split(" ").filter(Boolean);
+  if (transcriptTokens.length === 0) {
+    return null;
+  }
+
+  let bestMatch: { entry: PhraseEntry; score: number } | null = null;
+
+  for (const entry of phraseEntries) {
+    const score = scorePhraseAgainstTranscript(entry, transcriptTokens, mode);
+    if (score === null) {
+      continue;
+    }
+
+    if (!bestMatch || score > bestMatch.score) {
+      bestMatch = { entry, score };
+    }
+  }
+
+  if (!bestMatch) {
+    return null;
+  }
+
+  return isAcceptableFuzzyMatch(bestMatch.score, bestMatch.entry.tokens.length)
+    ? bestMatch.entry
+    : null;
+}
+
+function scorePhraseAgainstTranscript(entry: PhraseEntry, transcriptTokens: string[], mode: AppMode) {
+  const minWindowLength = Math.max(1, entry.tokens.length - 1);
+  const maxWindowLength = Math.min(transcriptTokens.length, entry.tokens.length + 2);
+
+  if (maxWindowLength < minWindowLength) {
+    return null;
+  }
+
+  let bestScore = Number.NEGATIVE_INFINITY;
+
+  for (let windowLength = minWindowLength; windowLength <= maxWindowLength; windowLength += 1) {
+    for (let startIndex = 0; startIndex <= transcriptTokens.length - windowLength; startIndex += 1) {
+      const windowTokens = transcriptTokens.slice(startIndex, startIndex + windowLength);
+      const joinedWindow = windowTokens.join(" ");
+      const stringScore = similarityScore(joinedWindow, entry.phrase);
+      const tokenScore = alignedTokenSimilarity(windowTokens, entry.tokens);
+      const anchorScore = anchorTokenSimilarity(windowTokens, entry.tokens);
+      const modeBoost = commandModeBoost(entry.command, mode);
+      const score = tokenScore * 0.55 + stringScore * 0.35 + anchorScore * 0.1 + modeBoost;
+
+      if (score > bestScore) {
+        bestScore = score;
+      }
+    }
+  }
+
+  return Number.isFinite(bestScore) ? bestScore : null;
+}
+
+function alignedTokenSimilarity(leftTokens: string[], rightTokens: string[]) {
+  const totalSlots = Math.max(leftTokens.length, rightTokens.length);
+  let score = 0;
+
+  for (let index = 0; index < totalSlots; index += 1) {
+    const left = leftTokens[index];
+    const right = rightTokens[index];
+
+    if (!left || !right) {
+      score += 0.35;
+      continue;
+    }
+
+    score += tokenSimilarity(left, right);
+  }
+
+  return score / totalSlots;
+}
+
+function anchorTokenSimilarity(leftTokens: string[], rightTokens: string[]) {
+  let best = 0;
+
+  for (const left of leftTokens) {
+    for (const right of rightTokens) {
+      best = Math.max(best, tokenSimilarity(left, right));
+    }
+  }
+
+  return best;
+}
+
+function tokenSimilarity(left: string, right: string) {
+  if (left === right) {
+    return 1;
+  }
+
+  const simplifiedLeft = simplifySpokenToken(left);
+  const simplifiedRight = simplifySpokenToken(right);
+
+  if (simplifiedLeft === simplifiedRight) {
+    return 0.96;
+  }
+
+  if (simplifiedLeft.includes(simplifiedRight) || simplifiedRight.includes(simplifiedLeft)) {
+    const shorterLength = Math.min(simplifiedLeft.length, simplifiedRight.length);
+    if (shorterLength >= 4) {
+      return 0.9;
+    }
+  }
+
+  return similarityScore(simplifiedLeft, simplifiedRight);
+}
+
+function simplifySpokenToken(token: string) {
+  return token
+    .replace(/ough/g, "o")
+    .replace(/au/g, "a")
+    .replace(/ou/g, "u")
+    .replace(/ph/g, "f")
+    .replace(/ck/g, "k")
+    .replace(/ght/g, "t")
+    .replace(/ing$/g, "in")
+    .replace(/ed$/g, "d")
+    .replace(/(.)\1+/g, "$1");
+}
+
+function similarityScore(left: string, right: string) {
+  if (!left || !right) {
+    return 0;
+  }
+
+  const longestLength = Math.max(left.length, right.length);
+  if (longestLength === 0) {
+    return 1;
+  }
+
+  return 1 - levenshteinDistance(left, right) / longestLength;
+}
+
+function levenshteinDistance(left: string, right: string) {
+  const rows = left.length + 1;
+  const columns = right.length + 1;
+  const matrix = Array.from({ length: rows }, () => Array<number>(columns).fill(0));
+
+  for (let row = 0; row < rows; row += 1) {
+    matrix[row][0] = row;
+  }
+
+  for (let column = 0; column < columns; column += 1) {
+    matrix[0][column] = column;
+  }
+
+  for (let row = 1; row < rows; row += 1) {
+    for (let column = 1; column < columns; column += 1) {
+      const substitutionCost = left[row - 1] === right[column - 1] ? 0 : 1;
+
+      matrix[row][column] = Math.min(
+        matrix[row - 1][column] + 1,
+        matrix[row][column - 1] + 1,
+        matrix[row - 1][column - 1] + substitutionCost,
+      );
+    }
+  }
+
+  return matrix[rows - 1][columns - 1];
+}
+
+function commandModeBoost(command: ParsedCommand, mode: AppMode) {
+  if (command.type === "sleep" && mode === "sleep") {
+    return 0.04;
+  }
+
+  if (command.type === "handoff" && mode === "handoff") {
+    return 0.04;
+  }
+
+  if (command.type === "log" && mode === "log") {
+    return 0.04;
+  }
+
+  return 0;
+}
+
+function isAcceptableFuzzyMatch(score: number, phraseTokenLength: number) {
+  if (phraseTokenLength >= 3) {
+    return score >= 0.76;
+  }
+
+  if (phraseTokenLength === 2) {
+    return score >= 0.82;
+  }
+
+  return score >= 0.92;
 }

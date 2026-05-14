@@ -948,7 +948,7 @@ export function VoiceDashboard() {
       return message;
     }
 
-    const command = resolveCommand(transcript);
+    const command = resolveCommand(transcript, context.mode);
 
     if (command.type === "unknown") {
       send({ type: "UNRECOGNIZED", transcript });
